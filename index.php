@@ -6,8 +6,9 @@ use PHPMentors\Workflower\Definition\Bpmn2Reader;
 require_once "vendor/autoload.php";
 
 $bpmn2Reader = new Bpmn2Reader();
-$workflow = $bpmn2Reader->read('vendor/phpmentors/workflower/tests/Resources/config/workflower/LoanRequestProcess.bpmn');
-$participant = new CustomParticipant(['ROLE_BRANCH', 'ROLE_CREDIT_FACTORY', 'ROLE_BACK_OFFICE']);
+//$workflow = $bpmn2Reader->read('vendor/phpmentors/workflower/tests/Resources/config/workflower/LoanRequestProcess.bpmn');
+$workflow = $bpmn2Reader->read('c.bpmn');
+$participant = new CustomParticipant(['ROLE_BRANCH', 'ROLE_CREDIT_FACTORY', 'ROLE_BACK_OFFICE', '__ROLE__']);
 
 
 
