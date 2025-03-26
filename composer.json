@@ -2,5 +2,10 @@
     "require": {
         "phpmentors/workflower": "^1.4",
         "phpmentors/workflower-bundle": "1.4.*"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
     }
 }

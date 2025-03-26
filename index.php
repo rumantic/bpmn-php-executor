@@ -1,27 +1,51 @@
 <?php
 
+use App\CustomParticipant;
 use PHPMentors\Workflower\Definition\Bpmn2Reader;
 
 require_once "vendor/autoload.php";
 
 $bpmn2Reader = new Bpmn2Reader();
-
 $workflow = $bpmn2Reader->read('vendor/phpmentors/workflower/tests/Resources/config/workflower/LoanRequestProcess.bpmn');
+$participant = new CustomParticipant(['ROLE_BRANCH', 'ROLE_CREDIT_FACTORY', 'ROLE_BACK_OFFICE']);
+
+
+
+$workflow->setProcessData(array('rejected' => false));
 $workflow->start($workflow->getFlowObject('Start'));
-$current = $workflow->getCurrentFlowObject();
-echo $current->getName().'<br>';
-$participant = \Phake::mock('PHPMentors\Workflower\Workflow\Participant\ParticipantInterface');
 
-$workflow->startWorkItem($current, $participant);
-$log = $workflow->getActivityLog();
-foreach ($log->getIterator() as $logItem) {
-    echo '<pre>';
-    print_r($logItem);
-    echo '</pre>';;
-}
-echo '<pre>';
-print_r($log->toArray());
-echo '</pre>';
+$currentFlowObject = $workflow->getCurrentFlowObject();
+echo $currentFlowObject->getName().'<br>';
+
+$workflow->allocateWorkItem($workflow->getCurrentFlowObject(), $participant);
+$workflow->startWorkItem($workflow->getCurrentFlowObject(), $participant);
+$workflow->completeWorkItem($workflow->getCurrentFlowObject(), $participant);
+
+$currentFlowObject = $workflow->getCurrentFlowObject();
+echo $currentFlowObject->getName().'<br>';
 
 
-//echo $current->getRole();
+$workflow->allocateWorkItem($workflow->getCurrentFlowObject(), $participant);
+$workflow->startWorkItem($workflow->getCurrentFlowObject(), $participant);
+$workflow->setProcessData(array('rejected' => false));
+
+$workflow->completeWorkItem($workflow->getCurrentFlowObject(), $participant);
+
+$currentFlowObject = $workflow->getCurrentFlowObject();
+echo $currentFlowObject->getName().'<br>';
+
+$workflow->allocateWorkItem($workflow->getCurrentFlowObject(), $participant);
+$workflow->startWorkItem($workflow->getCurrentFlowObject(), $participant);
+
+$workflow->completeWorkItem($workflow->getCurrentFlowObject(), $participant);
+
+$currentFlowObject = $workflow->getCurrentFlowObject();
+echo $currentFlowObject->getName().'<br>';
+
+$workflow->allocateWorkItem($workflow->getCurrentFlowObject(), $participant);
+$workflow->startWorkItem($workflow->getCurrentFlowObject(), $participant);
+
+$workflow->completeWorkItem($workflow->getCurrentFlowObject(), $participant);
+
+$currentFlowObject = $workflow->getCurrentFlowObject();
+echo $currentFlowObject->getName().'<br>';
