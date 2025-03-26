@@ -1,0 +1,6 @@
+{
+    "require": {
+        "phpmentors/workflower": "^1.4",
+        "phpmentors/workflower-bundle": "1.4.*"
+    }
+}
