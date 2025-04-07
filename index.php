@@ -57,6 +57,9 @@ if ($workflow->isEnded()) {
     session_destroy();
 } else {
     echo "<h1>Текущий шаг: " . htmlspecialchars($currentFlowObject->getName()) . "</h1>";
+    echo '<pre>';
+    print_r($currentFlowObject);
+    echo '</pre>';
 
     // Если это условный переход, показать выбор
     if ($currentFlowObject instanceof \PHPMentors\Workflower\Workflow\Gateway\ExclusiveGateway) {
