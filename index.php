@@ -38,6 +38,7 @@ if (!isset($_SESSION['bpmnFile'])) {
 $bpmn2Reader = new Bpmn2Reader();
 //$workflow = $bpmn2Reader->read($_SESSION['bpmnFile']);
 $workflow = $bpmn2Reader->read($uploadedFilePathL);
+$xmlLoader = new \App\XMLContentLoader($_SESSION['bpmnFile']);
 
 // Инициализация участника
 $participant = new CustomParticipant(['ROLE_BRANCH', 'ROLE_CREDIT_FACTORY', 'ROLE_BACK_OFFICE', '__ROLE__']);
@@ -92,9 +93,10 @@ if ($workflow->isEnded()) {
     session_destroy();
 } else {
     echo "<h1>Текущий шаг: " . htmlspecialchars($currentFlowObject->getName()) . "</h1>";
-    echo '<pre>';
-    print_r($currentFlowObject);
-    echo '</pre>';
+
+
+    $content = $xmlLoader->getHtmlContent($currentFlowObject->getId());
+    echo $content;
 
     // Если это условный переход, показать выбор
     if ($currentFlowObject instanceof \PHPMentors\Workflower\Workflow\Gateway\ExclusiveGateway) {
