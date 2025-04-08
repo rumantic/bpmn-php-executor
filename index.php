@@ -6,6 +6,15 @@ use PHPMentors\Workflower\Definition\Bpmn2Reader;
 session_start();
 require_once "vendor/autoload.php";
 
+if ( $_GET['action'] == 'reset' ) {
+    echo "<a href='/'>сброс выполнен, начать снова</a><hr>";
+    session_destroy();
+    exit;
+} else {
+    echo "<a href='/?action=reset'>сброс</a><hr>";
+}
+
+
 // Проверка загрузки файла BPMN
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['bpmnFile']) && $_FILES['bpmnFile']['error'] === UPLOAD_ERR_OK) {
     $uploadedFilePath = __DIR__ . '/uploads/' . basename($_FILES['bpmnFile']['name']);
@@ -14,6 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['bpmnFile']) && $_FIL
     $_SESSION['bpmnFile'] = $uploadedFilePath;
 } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['useDefault'])) {
     $_SESSION['bpmnFile'] = './uploads/long-simple.bpmn';
+    $uploadedFilePathL = $_SESSION['bpmnFile'];
 } else {
     $uploadedFilePathL = $_SESSION['bpmnFile'];
 }
@@ -90,6 +100,7 @@ if (!$workflow->isEnded()) {
 // Генерация HTML-страницы
 if ($workflow->isEnded()) {
     echo "<h1>Процесс завершен!</h1>";
+    echo "<a href='/'>еще раз</a>";
     session_destroy();
 } else {
     echo "<h1>Текущий шаг: " . htmlspecialchars($currentFlowObject->getName()) . "</h1>";
