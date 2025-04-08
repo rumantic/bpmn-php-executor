@@ -6,18 +6,53 @@ use PHPMentors\Workflower\Definition\Bpmn2Reader;
 session_start();
 require_once "vendor/autoload.php";
 
+// Проверка загрузки файла BPMN
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['bpmnFile']) && $_FILES['bpmnFile']['error'] === UPLOAD_ERR_OK) {
+    $uploadedFilePath = __DIR__ . '/uploads/' . basename($_FILES['bpmnFile']['name']);
+    $uploadedFilePathL = './uploads/' . basename($_FILES['bpmnFile']['name']);
+    move_uploaded_file($_FILES['bpmnFile']['tmp_name'], $uploadedFilePath);
+    $_SESSION['bpmnFile'] = $uploadedFilePath;
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['useDefault'])) {
+    $_SESSION['bpmnFile'] = './uploads/long-simple.bpmn';
+} else {
+    $uploadedFilePathL = $_SESSION['bpmnFile'];
+}
+
+// Если файл BPMN не выбран, показать форму загрузки
+if (!isset($_SESSION['bpmnFile'])) {
+    echo "<h1>Выберите файл BPMN</h1>";
+    echo "<form method='POST' enctype='multipart/form-data'>";
+    echo "<p>Загрузите файл BPMN:</p>";
+    echo "<input type='file' name='bpmnFile' required>";
+    echo "<button type='submit'>Загрузить</button>";
+    echo "</form>";
+    echo "<form method='POST'>";
+    echo "<button type='submit' name='useDefault'>Использовать файл по умолчанию</button>";
+    echo "</form>";
+    exit;
+}
+//unset($_SESSION['currentStep']);
+//unset($_SESSION['bpmnFile']);
+//echo $_SESSION['bpmnFile'];
 // Загрузка BPMN-файла
 $bpmn2Reader = new Bpmn2Reader();
-// $workflow = $bpmn2Reader->read('c.bpmn');
-$workflow = $bpmn2Reader->read('long-simple.bpmn');
+//$workflow = $bpmn2Reader->read($_SESSION['bpmnFile']);
+$workflow = $bpmn2Reader->read($uploadedFilePathL);
 
 // Инициализация участника
 $participant = new CustomParticipant(['ROLE_BRANCH', 'ROLE_CREDIT_FACTORY', 'ROLE_BACK_OFFICE', '__ROLE__']);
 
 // Проверка текущего шага в сессии
 if (!isset($_SESSION['currentStep'])) {
+    $start_variants = ['Start', 'StartEvent', 'StartEvent_1'];
     // Получение идентификатора StartEvent
-    $startEvent = $workflow->getFlowObject('StartEvent_1'); // Замените 'Start' на реальный ID из BPMN-файла
+    foreach ($start_variants as $start_variant) {
+        $startEvent = $workflow->getFlowObject($start_variant);
+        if ($startEvent != null) {
+            break;
+        }
+
+    }
     if ($startEvent === null) {
         die("Ошибка: StartEvent с идентификатором 'Start' не найден в BPMN-файле.");
     }
