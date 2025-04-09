@@ -6,9 +6,9 @@ use PHPMentors\Workflower\Definition\Bpmn2Reader;
 
 class BpmnApiHandler
 {
-    private string $bpmnFilePath;
+    private $bpmnFilePath;
     private $workflow;
-    private XMLContentLoader $xmlLoader;
+    private $xmlLoader;
 
     public function __construct(string $bpmnFilePath)
     {
@@ -43,7 +43,17 @@ class BpmnApiHandler
             throw new \Exception("Ошибка: StartEvent не найден в BPMN-файле.");
         }
 
-        $nextStep = $this->workflow->getFlowObject($startEvent->getOutgoing()[0]->getId());
+        $participant = new CustomParticipant(['ROLE_BRANCH', 'ROLE_CREDIT_FACTORY', 'ROLE_BACK_OFFICE', '__ROLE__']);
+
+        $this->workflow->allocateWorkItem($startEvent, $participant);
+        $this->workflow->startWorkItem($startEvent, $participant);
+        $this->workflow->completeWorkItem($startEvent, $participant);
+
+        // Обновление текущего шага
+        $currentFlowObject = $this->workflow->getCurrentFlowObject();
+
+
+        $nextStep = $currentFlowObject->getId();
 
         return [
             'currentStepId' => $startEvent->getId(),
@@ -67,8 +77,19 @@ class BpmnApiHandler
             throw new \Exception("Ошибка: Шаг с ID '$currentStepId' не найден в BPMN-файле.");
         }
 
-        $outgoingFlows = $currentStep->getOutgoing();
-        if (empty($outgoingFlows)) {
+        $participant = new CustomParticipant(['ROLE_BRANCH', 'ROLE_CREDIT_FACTORY', 'ROLE_BACK_OFFICE', '__ROLE__']);
+
+        $this->workflow->allocateWorkItem($currentStep, $participant);
+        $this->workflow->startWorkItem($currentStep, $participant);
+        $this->workflow->completeWorkItem($currentStep, $participant);
+
+        // Обновление текущего шага
+        $currentFlowObject = $this->workflow->getCurrentFlowObject();
+
+
+
+
+        if (empty($currentFlowObject)) {
             return [
                 'currentStepId' => $currentStepId,
                 'currentStepContent' => $this->xmlLoader->getHtmlContent($currentStepId),
@@ -76,7 +97,7 @@ class BpmnApiHandler
             ];
         }
 
-        $nextStep = $this->workflow->getFlowObject($outgoingFlows[0]->getId());
+        $nextStep = $currentFlowObject->getId();
 
         return [
             'currentStepId' => $currentStepId,
