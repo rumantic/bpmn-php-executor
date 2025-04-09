@@ -20,7 +20,11 @@ class BpmnApiHandler
         $this->xmlLoader = new XMLContentLoader($bpmnFilePath);
 
         $bpmn2Reader = new Bpmn2Reader();
-        $this->workflow = $bpmn2Reader->read($bpmnFilePath);
+        if ( isset($_SESSION['workflow']) ) {
+            $this->workflow = unserialize($_SESSION['workflow']);
+        } else {
+            $this->workflow = $bpmn2Reader->read($bpmnFilePath);
+        }
     }
 
     /**
@@ -44,21 +48,19 @@ class BpmnApiHandler
         }
 
         $participant = new CustomParticipant(['ROLE_BRANCH', 'ROLE_CREDIT_FACTORY', 'ROLE_BACK_OFFICE', '__ROLE__']);
-
-        $this->workflow->allocateWorkItem($startEvent, $participant);
-        $this->workflow->startWorkItem($startEvent, $participant);
-        $this->workflow->completeWorkItem($startEvent, $participant);
+        $this->workflow->start($startEvent);
 
         // Обновление текущего шага
         $currentFlowObject = $this->workflow->getCurrentFlowObject();
 
 
         $nextStep = $currentFlowObject->getId();
+        $_SESSION['workflow'] = serialize($this->workflow);
 
         return [
             'currentStepId' => $startEvent->getId(),
             'currentStepContent' => $this->xmlLoader->getHtmlContent($startEvent->getId()),
-            'nextStepId' => $nextStep->getId(),
+            'nextStepId' => $nextStep,
         ];
     }
 
@@ -69,9 +71,10 @@ class BpmnApiHandler
      * @return array
      * @throws \Exception
      */
-    public function getStepContent(string $currentStepId): array
+    public function getStepContent($currentStepId)
     {
         $currentStep = $this->workflow->getFlowObject($currentStepId);
+
 
         if ($currentStep === null) {
             throw new \Exception("Ошибка: Шаг с ID '$currentStepId' не найден в BPMN-файле.");
@@ -98,6 +101,8 @@ class BpmnApiHandler
         }
 
         $nextStep = $currentFlowObject->getId();
+
+        $_SESSION['workflow'] = serialize($this->workflow);
 
         return [
             'currentStepId' => $currentStepId,
