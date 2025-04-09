@@ -20,11 +20,19 @@ class BpmnApiHandler
         $this->xmlLoader = new XMLContentLoader($bpmnFilePath);
 
         $bpmn2Reader = new Bpmn2Reader();
-        if ( isset($_SESSION['workflow']) ) {
-            $this->workflow = unserialize($_SESSION['workflow']);
+        $workflowFile = sys_get_temp_dir() . '/workflow_' . md5($bpmnFilePath) . '.ser';
+
+        if (file_exists($workflowFile)) {
+            $this->workflow = unserialize(file_get_contents($workflowFile));
         } else {
             $this->workflow = $bpmn2Reader->read($bpmnFilePath);
         }
+    }
+
+    public function saveWorkflow(): void
+    {
+        $workflowFile = sys_get_temp_dir() . '/workflow_' . md5($this->bpmnFilePath) . '.ser';
+        file_put_contents($workflowFile, serialize($this->workflow));
     }
 
     /**
@@ -53,9 +61,8 @@ class BpmnApiHandler
         // Обновление текущего шага
         $currentFlowObject = $this->workflow->getCurrentFlowObject();
 
-
         $nextStep = $currentFlowObject->getId();
-        $_SESSION['workflow'] = serialize($this->workflow);
+        $this->saveWorkflow();
 
         return [
             'currentStepId' => $startEvent->getId(),
@@ -75,7 +82,6 @@ class BpmnApiHandler
     {
         $currentStep = $this->workflow->getFlowObject($currentStepId);
 
-
         if ($currentStep === null) {
             throw new \Exception("Ошибка: Шаг с ID '$currentStepId' не найден в BPMN-файле.");
         }
@@ -89,9 +95,6 @@ class BpmnApiHandler
         // Обновление текущего шага
         $currentFlowObject = $this->workflow->getCurrentFlowObject();
 
-
-
-
         if (empty($currentFlowObject)) {
             return [
                 'currentStepId' => $currentStepId,
@@ -102,12 +105,12 @@ class BpmnApiHandler
 
         $nextStep = $currentFlowObject->getId();
 
-        $_SESSION['workflow'] = serialize($this->workflow);
+        $this->saveWorkflow();
 
         return [
             'currentStepId' => $currentStepId,
             'currentStepContent' => $this->xmlLoader->getHtmlContent($currentStepId),
-            'nextStepId' => $nextStep->getId(),
+            'nextStepId' => $nextStep,
         ];
     }
 }
