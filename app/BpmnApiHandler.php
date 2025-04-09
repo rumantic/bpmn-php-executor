@@ -43,6 +43,13 @@ class BpmnApiHandler
      */
     public function getFirstStep(): array
     {
+        $workflowFile = sys_get_temp_dir() . '/workflow_' . md5($this->bpmnFilePath) . '.ser';
+
+        // Удаляем предыдущий файл workflow, если он существует
+        if (file_exists($workflowFile)) {
+            unlink($workflowFile);
+        }
+
         $startVariants = ['Start', 'StartEvent', 'StartEvent_1'];
         foreach ($startVariants as $startVariant) {
             $startEvent = $this->workflow->getFlowObject($startVariant);
