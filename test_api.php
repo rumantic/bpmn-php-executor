@@ -88,7 +88,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php if (!empty($_SESSION['currentStepName'])): ?>
         <h2>Текущий шаг: <?= htmlspecialchars($_SESSION['currentStepName']) ?></h2>
         <div>
-            <?= $_SESSION['currentStepContent'] ?>
         </div>
         <form method="POST">
             <input type="hidden" name="currentStepId" value="<?= htmlspecialchars($_SESSION['currentStepId']) ?>">

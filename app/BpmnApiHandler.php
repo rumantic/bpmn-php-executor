@@ -35,6 +35,15 @@ class BpmnApiHandler
         file_put_contents($workflowFile, serialize($this->workflow));
     }
 
+    private function destroyWorkflow() {
+        $workflowFile = sys_get_temp_dir() . '/workflow_' . md5($this->bpmnFilePath) . '.ser';
+
+        // Удаляем предыдущий файл workflow, если он существует
+        if (file_exists($workflowFile)) {
+            unlink($workflowFile);
+        }
+    }
+
     /**
      * Получить первый шаг и ID следующего шага.
      *
@@ -47,7 +56,7 @@ class BpmnApiHandler
 
         // Удаляем предыдущий файл workflow, если он существует
         if (file_exists($workflowFile)) {
-            unlink($workflowFile);
+            $this->destroyWorkflow();
         }
 
         $startVariants = ['Start', 'StartEvent', 'StartEvent_1'];
@@ -89,35 +98,37 @@ class BpmnApiHandler
     {
         $currentStep = $this->workflow->getFlowObject($currentStepId);
 
-        if ($currentStep === null) {
-            throw new \Exception("Ошибка: Шаг с ID '$currentStepId' не найден в BPMN-файле.");
-        }
+        if (!$this->workflow->isEnded()) {
+            if ($currentStep === null) {
+                throw new \Exception("Ошибка: Шаг с ID '$currentStepId' не найден в BPMN-файле.");
+            }
 
-        $participant = new CustomParticipant(['ROLE_BRANCH', 'ROLE_CREDIT_FACTORY', 'ROLE_BACK_OFFICE', '__ROLE__']);
+            $participant = new CustomParticipant(['ROLE_BRANCH', 'ROLE_CREDIT_FACTORY', 'ROLE_BACK_OFFICE', '__ROLE__']);
 
-        $this->workflow->allocateWorkItem($currentStep, $participant);
-        $this->workflow->startWorkItem($currentStep, $participant);
-        $this->workflow->completeWorkItem($currentStep, $participant);
+            $this->workflow->allocateWorkItem($currentStep, $participant);
+            $this->workflow->startWorkItem($currentStep, $participant);
+            $this->workflow->completeWorkItem($currentStep, $participant);
 
-        // Обновление текущего шага
-        $currentFlowObject = $this->workflow->getCurrentFlowObject();
+            // Обновление текущего шага
+            $currentFlowObject = $this->workflow->getCurrentFlowObject();
 
-        if (empty($currentFlowObject)) {
+            $nextStep = $currentFlowObject->getId();
+
+            $this->saveWorkflow();
+
+            return [
+                'currentStepId' => $currentStepId,
+                'currentStepContent' => $this->xmlLoader->getHtmlContent($currentStepId),
+                'nextStepId' => $nextStep,
+            ];
+        } else {
+            $this->destroyWorkflow();
+
             return [
                 'currentStepId' => $currentStepId,
                 'currentStepContent' => $this->xmlLoader->getHtmlContent($currentStepId),
                 'message' => 'Процесс завершен.',
             ];
         }
-
-        $nextStep = $currentFlowObject->getId();
-
-        $this->saveWorkflow();
-
-        return [
-            'currentStepId' => $currentStepId,
-            'currentStepContent' => $this->xmlLoader->getHtmlContent($currentStepId),
-            'nextStepId' => $nextStep,
-        ];
     }
 }
