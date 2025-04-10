@@ -12,9 +12,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Формируем данные для отправки в API
     $postData = [
-        'fileName' => $fileName,
+        // 'fileName' => $fileName,
         'task_id' => '123',
         'user_id' => 'mister',
+        'file_content' => file_get_contents($fileName),
     ];
 
     if ($currentStepId) {
