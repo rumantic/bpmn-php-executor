@@ -13,6 +13,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Формируем данные для отправки в API
     $postData = [
         'fileName' => $fileName,
+        'task_id' => '123',
+        'user_id' => 'mister',
     ];
 
     if ($currentStepId) {
@@ -31,6 +33,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
+
+    $response = mb_convert_encoding($response, 'UTF-8', 'auto');
 
     echo "<p>Отладка: Ответ от API:</p>";
     echo "<p>HTTP-код ответа: $httpCode</p>";

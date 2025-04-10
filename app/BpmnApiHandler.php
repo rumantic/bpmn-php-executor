@@ -10,8 +10,14 @@ class BpmnApiHandler
     private $workflow;
     private $xmlLoader;
 
-    public function __construct(string $bpmnFilePath)
+    private $user_id;
+    private $task_id;
+
+    public function __construct(string $bpmnFilePath, string $user_id, int $task_id)
     {
+        $this->user_id = $user_id;
+        $this->task_id = $task_id;
+
         if (!file_exists($bpmnFilePath)) {
             throw new \Exception("Файл BPMN не найден: " . $bpmnFilePath);
         }
@@ -20,7 +26,7 @@ class BpmnApiHandler
         $this->xmlLoader = new XMLContentLoader($bpmnFilePath);
 
         $bpmn2Reader = new Bpmn2Reader();
-        $workflowFile = sys_get_temp_dir() . '/workflow_' . md5($bpmnFilePath) . '.ser';
+        $workflowFile = $this->getWorkflowSessionFile();
 
         if (file_exists($workflowFile)) {
             $this->workflow = unserialize(file_get_contents($workflowFile));
@@ -29,14 +35,24 @@ class BpmnApiHandler
         }
     }
 
+    private function getWorkflowSessionFile(): string
+    {
+        return sys_get_temp_dir() . '/'.$this->getWorkflowPrefix() . md5($this->bpmnFilePath) . '.ser';
+    }
+
+    private function getWorkflowPrefix()
+    {
+        return 'workflow_u_'.$this->user_id.'_t_'.$this->task_id.'_';
+    }
+
     public function saveWorkflow(): void
     {
-        $workflowFile = sys_get_temp_dir() . '/workflow_' . md5($this->bpmnFilePath) . '.ser';
+        $workflowFile = $this->getWorkflowSessionFile();
         file_put_contents($workflowFile, serialize($this->workflow));
     }
 
     private function destroyWorkflow() {
-        $workflowFile = sys_get_temp_dir() . '/workflow_' . md5($this->bpmnFilePath) . '.ser';
+        $workflowFile = $this->getWorkflowSessionFile();
 
         // Удаляем предыдущий файл workflow, если он существует
         if (file_exists($workflowFile)) {
@@ -52,7 +68,7 @@ class BpmnApiHandler
      */
     public function getFirstStep(): array
     {
-        $workflowFile = sys_get_temp_dir() . '/workflow_' . md5($this->bpmnFilePath) . '.ser';
+        $workflowFile = $this->getWorkflowSessionFile();
 
         // Удаляем предыдущий файл workflow, если он существует
         if (file_exists($workflowFile)) {
